@@ -5,7 +5,7 @@ Architecture summaries of patterns that proved out. They describe the approach s
 ## Public
 
 - **[Fusion Manage live viewer](https://github.com/AutoGusX/fusion-manage-live-viewer)**: a Claude Code plugin that runs a local APS viewer with BOM, table and record panels, and drives FM operations through a CLI. Bring your own APS client ID and tenant.
-- **[Fusion Manage PLM docs site](https://github.com/AutoGusX/fusion-manage-plm-docs)**: an Astro Starlight site documenting the FM API surface used in this kit. Useful alongside [`gotchas/fm-api.md`](../gotchas/fm-api.md).
+- **[Fusion Manage PLM docs site](https://autogusx.github.io/fusion-manage-plm-docs/)** ([source](https://github.com/AutoGusX/fusion-manage-plm-docs)): an Astro Starlight site documenting the FM API surface, including the undocumented Configuration API, workflow definitions, BOM views, delegations, reports, a route map and an admin UI coverage matrix. **This is the source of truth for endpoint detail.** The gotchas in this kit are the short, symptom-first version.
 
 ## Patterns
 

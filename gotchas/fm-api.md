@@ -86,11 +86,21 @@ These come from live probing. Many endpoints are not publicly documented and can
 - Field type ids that can carry a lookup: 6, 7, 10, 13, 14, 20, 22, 23, 24, 25, 26, 27, 29. Titles are ambiguous ("Single Selection" is both id 20, plain, and id 23, linking), so branch on the type id or `nameKey`, never the title.
 - Verified 2026-09.
 
-## 9. Per-tenant API base for the Configuration API
+## 9. Per-tenant API base and tenant header for the Configuration API
 
-- Sandbox tenants answer under one path (`/plm360-ft`) and production under another (`/plm360`). Hardcoding one breaks on the other.
-- Discover it per tenant: `GET /api/v3/configurations/{key}` for `ADSK_API_BASE_URL` and `ADSK_FLC_CONTEXT`.
-- Verified 2026-11 on one sandbox and one production tenant.
+- **Symptom:** `400 "The specified tenant is invalid"` for a tenant name you know is right.
+- **Cause:** Sandbox tenants answer under one path context (`/plm360-ft`) and production under another (`/plm360`). Each refuses the other's context with the same error an unknown tenant gets. Separately, the tenant is not in the host or path: it goes in an `adsk-plm-tenant` header, and omitting the header returns the same message.
+- **Fix:** Discover the base per tenant. `GET /api/v3/configurations/ADSK_API_BASE_URL` and `…/ADSK_FLC_CONTEXT` return the value in `value`; join them as `{ADSK_API_BASE_URL}{ADSK_FLC_CONTEXT}/v1/{resource}`. Keys are case-insensitive, an unknown key is `404`, and responses are cacheable for an hour, so read them once per session. Check the context before anything else when you see the tenant error. The tenant header is case-insensitive.
+- Do not build the host from `ADSK_REGION`. Only US-region tenants have been tested; a non-US host has not been observed.
+- Not yet confirmed: whether a token from your own APS app (rather than the web client's) is accepted, and the status a non-admin gets on writes. Treat configuration writes as admin-only and handle `403`.
+- Verified 2026-11 on one sandbox and one production tenant. Full detail: [Configuration API](https://autogusx.github.io/fusion-manage-plm-docs/api/config/configuration-api/).
+
+## 9a. Workflow and BOM view configuration use legacy JSON routes
+
+- Workflows: `GET /api/rest/workflows/{ws}.json`, `PUT /api/rest/workflows/{ws}`. The workflow id is the workspace id. `PUT` sends the complete workflow and removes whatever you omit. A workspace that does not exist returns `500`.
+- BOM views: `GET` and `PUT /api/rest/v1/setups/viewdefs.json?workspaceId={ws}&tab=BOM`, with available fields from `…/setups/bomAvailableFields.json`.
+- Both are on the tenant host and accept an ordinary bearer token, even though the admin UI uses the session cookie. v3 can only read workflows.
+- Verified 2026-11-17. Details: [Workflow definitions](https://autogusx.github.io/fusion-manage-plm-docs/api/config/workflow-definitions/), [BOM views](https://autogusx.github.io/fusion-manage-plm-docs/api/config/bom-views/).
 
 ## 10. Enabling a third-party web app
 

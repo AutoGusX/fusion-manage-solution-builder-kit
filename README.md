@@ -15,6 +15,8 @@ It captures a working method plus the API behavior that cost real debugging time
 | [`claude-code/`](claude-code/) | Slash commands, templates and a starter `CLAUDE.md` to adapt for your own Claude Code setup |
 | [`reference-projects/`](reference-projects/) | One-page architecture summaries of the patterns that proved out |
 
+For endpoint-level detail, see the companion [Fusion Manage PLM docs site](https://autogusx.github.io/fusion-manage-plm-docs/). This kit is the method and the traps; that site is the API reference.
+
 ## Start here
 
 1. Read [`playbook/01-way-of-working.md`](playbook/01-way-of-working.md). It is five minutes and sets the rules everything else follows.

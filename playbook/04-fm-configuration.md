@@ -19,16 +19,30 @@ An approach for taking a customer from requirements to a configured tenant quick
 
 ## API surfaces
 
-- **v3 REST** (`/api/v3/...`) for records, workspaces, fields, roles, groups and permissions.
-- **Configuration API** (an undocumented surface used by admin tooling) for creating and migrating workspace configuration. Its base path differs by tenant type, so discover it per tenant: read the tenant configuration keys `ADSK_API_BASE_URL` and `ADSK_FLC_CONTEXT` through `GET /api/v3/configurations/{key}`. Hardcoding the sandbox path breaks on production tenants.
+The admin UI saves through four channels. Which one a task needs decides whether it can be automated at all. The [PLM docs site](https://autogusx.github.io/fusion-manage-plm-docs/) keeps the endpoint-level detail and is the source of truth; this chapter is the short version. Start with its [Admin UI coverage](https://autogusx.github.io/fusion-manage-plm-docs/guides/admin-ui-coverage/) page, which maps every admin screen to the channel that can do the same job.
+
+| Channel | Where | Good for |
+|---|---|---|
+| **v3 REST** | `https://<tenant>.autodeskplm360.net/api/v3/...` | Records, users, groups, roles and permissions, section security, reading configuration |
+| **v1 Configuration API** | APS gateway, tenant in an `adsk-plm-tenant` header | Creating, updating and deleting workspaces, sections, fields, picklists, categories, tabs, descriptors, relationships, units of measure, delegations and report definitions; cloning workspaces |
+| **Legacy JSON** | `/api/rest/...` or `/api/v2/...` on the tenant host, bearer token | Workflow definitions (states, transitions, workflow permissions) and BOM views |
+| **Browser only** | `*.do` and `*.form` posts needing the session cookie and an XSRF token | Not usable from an integration: for example BOM fields, sourcing fields, behaviors, print views |
+
+Notes that apply across channels:
+
+- The Configuration API base differs by tenant, so discover it. Read `ADSK_API_BASE_URL` and `ADSK_FLC_CONTEXT` through `GET /api/v3/configurations/{key}`. Hardcoding the sandbox context (`/plm360-ft`) breaks on production (`/plm360`).
+- The tenant machine-publishes a route map of every v3 route (Jersey WADL). Use it, plus `OPTIONS` on a route, to check what exists before you probe.
 - Plan for tokens that expire after about an hour.
+- Everything outside v3 is undocumented. Probe at startup and degrade gracefully if a route 404s.
 
 ## Things you cannot read or do
 
 Learned the hard way; confirm for your tenant:
 
-- Item lifecycles are not readable by the routes tried (`404` on both the v3 and Configuration paths).
-- BOM-level fields were not readable.
+- **Workflows are writable, but whole.** `PUT /api/rest/workflows/{ws}` replaces the complete workflow, so anything you leave out is removed. Read first, change, then send everything. The response from `GET …/{ws}.json` also embeds every script on the tenant with its source, so never log it.
+- **BOM views are configurable; BOM fields are not.** You can choose which existing fields a BOM view shows through the legacy `setups` routes. Creating a new BOM field is still browser-only.
+- Lifecycle editing has not been mapped.
+- Behaviors, print views and item explorer settings are browser-only.
 - `403 VIEW_BOMS` on a BOM view means the workspace has no BOM tab. It is not an error.
 - Workspace-backed picklist values are item data, so a configuration snapshot does not include them.
 - Role names must be unique (`409 CONFLICT`).
